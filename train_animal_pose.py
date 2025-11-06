@@ -53,9 +53,7 @@ from diffusers.utils.import_utils import is_xformers_available
 
 from configs.utils import instantiate_from_config
 from omegaconf import OmegaConf
-from Adapter.extra_condition.model_edge import pidinet
 from models.unet import UNet
-from basicsr.utils import tensor2img
 import cv2
 from huggingface_hub import hf_hub_url
 import subprocess
@@ -63,7 +61,7 @@ import shlex
 
 urls = {
     'TencentARC/T2I-Adapter':[
-        'third-party-models/body_pose_model.pth', 'third-party-models/table5_pidinet.pth'
+        # 'third-party-models/body_pose_model.pth'
     ]
 }
 
@@ -523,13 +521,7 @@ def main(args):
         weight_decay=args.adam_weight_decay,
         eps=args.adam_epsilon,
     )
-    # load sketch model
-    sketch_model = pidinet()
-    ckp = torch.load('checkpoints/table5_pidinet.pth', map_location='cpu')['state_dict']
-    sketch_model.load_state_dict({k.replace('module.', ''): v for k, v in ckp.items()}, strict=True)
-    sketch_model = sketch_model.cuda()
-    for param in sketch_model.parameters():
-        param.required_grad = False
+
 
     # For mixed precision training we cast the text_encoder and vae weights to half-precision
     # as these models are only used for inference, keeping weights in full precision is not required.
@@ -651,10 +643,9 @@ def main(args):
                 batch["jpg"] = batch["jpg"].cuda()
                 batch["jpg"] = batch["jpg"]*2.-1.
                 # get sketch
-                edge = 0.5 * batch['jpg'] + 0.5
-                edge = sketch_model(edge)[-1]
+                pose = batch["pose"]
                 # add random threshold and random masking
-                edge = random_threshold(edge).to(dtype=weight_dtype)
+                pose = random_threshold(pose).to(dtype=weight_dtype)
 
                 # Convert images to latent space
                 if args.pretrained_vae_model_name_or_path is not None:
@@ -686,7 +677,7 @@ def main(args):
 
                 # Adapter conditioning.
                 down_block_additional_residuals = adapter(
-                    edge
+                    pose
                 )
 
                 # Predict the noise residual

@@ -61,13 +61,10 @@ class WebDataModuleFromConfig_DogPose(pl.LightningDataModule):
         self.multinode = multinode
 
     def make_loader(self, dataset_config):
-        # image_transforms 保持不变 (用于 .jpg)
+
         image_transforms = [instantiate_from_config(tt) for tt in dataset_config.image_transforms]
         image_transforms = transforms.Compose(image_transforms)
 
-        # process 函数将同时处理 .jpg 和 .pose.jpg
-        # 我们假设 process 函数 (如 AddEqual_fp16) 只是将 PIL 转为 Tensor
-        # 它将被 map_dict 用到两个键上
         process = instantiate_from_config(dataset_config['process'])
 
         shuffle = dataset_config.get('shuffle', 0)
@@ -82,14 +79,14 @@ class WebDataModuleFromConfig_DogPose(pl.LightningDataModule):
         print(f'Loading webdataset with {len(dset.pipeline[0].urls)} shards.')
 
         dset = (
-            dset.select(self.filter_keys)  # <-- 修改 filter_keys
+            dset.select(self.filter_keys)
             .decode('pil', handler=wds.warn_and_continue)
             .map_dict(
-                jpg=image_transforms,  # 对原始图应用变换 (如裁剪)
-                pose_jpg=image_transforms,  # 对条件图应用同样的变换，确保对齐！
+                jpg=image_transforms,
+                pose_jpg=image_transforms,
                 handler=wds.warn_and_continue
             )
-            .map(process)  # <-- 修改 process 函数
+            .map(process)
         )
         dset = (dset.batched(self.batch_size, partial=False, collation_fn=dict_collation_fn))
 
