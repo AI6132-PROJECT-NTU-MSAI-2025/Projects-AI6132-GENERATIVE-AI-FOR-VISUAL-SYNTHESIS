@@ -30,9 +30,9 @@ class AddEqual_fp16_DogPose(object):  # 创建一个新类
     def __call__(self, sample):
         if 'jpg' in sample:
             sample['jpg'] = to_tensor(sample['jpg'])
-        if 'pose.jpg' in sample:
-            sample['pose'] = to_tensor(sample['pose.jpg'])
-            del sample['pose.jpg']
+        if 'pose_jpg' in sample:
+            sample['pose'] = to_tensor(sample['pose_jpg'])
+            del sample['pose_jpg']
 
         return sample
 

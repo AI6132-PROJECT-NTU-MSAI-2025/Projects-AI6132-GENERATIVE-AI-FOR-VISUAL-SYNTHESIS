@@ -81,6 +81,7 @@ class WebDataModuleFromConfig_DogPose(pl.LightningDataModule):
         dset = (
             dset.select(self.filter_keys)
             .decode('pil', handler=wds.warn_and_continue)
+            .rename(pose_jpg="pose.jpg", handler=wds.warn_and_continue)
             .map_dict(
                 jpg=image_transforms,
                 pose_jpg=image_transforms,

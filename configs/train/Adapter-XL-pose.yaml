@@ -4,7 +4,7 @@ model:
       name: sketch
       target: Adapter.models.adapters.Adapter_XL
       params:
-        cin: 256
+        cin: 768
         channels: [320, 640, 1280, 1280]
         nums_rb: 2
         ksize: 1
@@ -14,12 +14,12 @@ model:
 data:
   target: dataset.dataset_dogpose.WebDataModuleFromConfig_DogPose
   params:
-    tar_base1: "data/Dogpose_wiPose_train"
+    tar_base: "data/Dogpose_wiPose_train"
     batch_size: 2
     num_workers: 8
     multinode: True
     train:
-      shards1: 'dogpose-shard-{000000..000006}.tar'
+      shards: 'dogpose-shard-{000000..000006}.tar'
       shuffle: 10000
       image_key: jpg
       image_transforms:

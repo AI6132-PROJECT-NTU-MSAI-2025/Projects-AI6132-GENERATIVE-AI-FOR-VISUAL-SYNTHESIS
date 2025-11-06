@@ -340,7 +340,8 @@ def encode_prompt(prompt_batch, text_encoders, tokenizers, proportion_empty_prom
         if random.random() < proportion_empty_prompts:
             captions.append("")
         elif isinstance(caption, str):
-            captions.append(caption)
+            clean_caption = caption.strip("[]'")
+            captions.append(clean_caption)
         elif isinstance(caption, (list, np.ndarray)):
             # take a random caption if there are multiple
             captions.append(random.choice(caption) if is_train else caption[0])
@@ -643,7 +644,7 @@ def main(args):
                 batch["jpg"] = batch["jpg"].cuda()
                 batch["jpg"] = batch["jpg"]*2.-1.
                 # get sketch
-                pose = batch["pose"]
+                pose = batch["pose"].cuda()
                 # add random threshold and random masking
                 pose = random_threshold(pose).to(dtype=weight_dtype)
 
@@ -663,7 +664,14 @@ def main(args):
 
                 # Cubic sampling to sample a random timestep for each image
                 timesteps = torch.rand((bsz, ), device=latents.device)
-                timesteps = (1 - timesteps**3) * noise_scheduler.config.num_train_timesteps
+
+                # Source Code 潜在问题解决：将值钳制(clamp)在有效范围内 [0, num_train_timesteps-1]，避免越界
+                timesteps_float = (1 - timesteps**3) * noise_scheduler.config.num_train_timesteps
+
+                timesteps = torch.clamp(
+                    timesteps_float, 0.0, noise_scheduler.config.num_train_timesteps - 1
+                )
+
                 timesteps = timesteps.long()
 
                 # Add noise to the latents according to the noise magnitude at each timestep
