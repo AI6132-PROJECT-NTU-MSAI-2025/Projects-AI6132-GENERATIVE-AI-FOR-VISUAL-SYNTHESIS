@@ -1,0 +1,18 @@
+# 你的核心PyTorch (CUDA 11.7/11.8)
+torch==2.0.1
+torchvision==0.15.2
+
+# 关键：锁定T2I-Adapter训练脚本所依赖的“旧时代”版本
+diffusers==0.19.3
+huggingface_hub==0.19.4
+
+# 降级其他包以匹配 "huggingface_hub 0.19.4" 的时代
+# (这些版本与 hub 0.19.4 兼容)
+transformers==4.30.0
+accelerate==0.21.0
+datasets==2.13.1
+
+# 你的其他依赖
+omegaconf
+pytorch_lightning
+gradio

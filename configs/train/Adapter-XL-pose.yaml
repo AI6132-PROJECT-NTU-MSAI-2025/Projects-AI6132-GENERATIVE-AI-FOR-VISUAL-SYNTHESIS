@@ -1,0 +1,34 @@
+model:
+  params:
+    adapter_config:
+      name: sketch
+      target: Adapter.models.adapters.Adapter_XL
+      params:
+        cin: 256
+        channels: [320, 640, 1280, 1280]
+        nums_rb: 2
+        ksize: 1
+        sk: true
+        use_conv: false
+      pretrained: checkpoints/adapter-xl-sketch.pth
+data:
+  target: dataset.dataset_dogpose.WebDataModuleFromConfig_DogPose
+  params:
+    tar_base1: "data/Dogpose_wiPose_train"
+    batch_size: 2
+    num_workers: 8
+    multinode: True
+    train:
+      shards1: 'dogpose-shard-{000000..000006}.tar'
+      shuffle: 10000
+      image_key: jpg
+      image_transforms:
+      - target: torchvision.transforms.Resize
+        params:
+          size: 1024
+          interpolation: 3
+      - target: torchvision.transforms.RandomCrop
+        params:
+          size: 1024
+      process:
+        target: dataset.utils.AddEqual_fp16_DogPose
