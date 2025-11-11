@@ -31,7 +31,7 @@ DESCRIPTION += f'<p>Gradio demo for **T2I-Adapter-XL**: [[GitHub]](https://githu
 # diffusion sampler creation
 sampler = diffusion_inference('stabilityai/stable-diffusion-xl-base-1.0')
 
-def run(input_image, in_type, prompt, a_prompt, n_prompt, ddim_steps, scale, seed, cond_name, con_strength):
+def run(input_image, in_type, prompt, a_prompt, n_prompt, ddim_steps, scale, seed, cond_name, con_strength, cond_image=None):
     in_type = in_type.lower()
     prompt = prompt+', '+a_prompt
     config = OmegaConf.load(f'configs/inference/Adapter-XL-{cond_name}.yaml')
@@ -43,12 +43,20 @@ def run(input_image, in_type, prompt, a_prompt, n_prompt, ddim_steps, scale, see
     process_cond_module = getattr(api, f'get_cond_{cond_name}')
 
     # diffusion generation
-    cond = process_cond_module(
-        global_opt,
-        input_image, 
-        cond_inp_type = in_type, 
-        cond_model = cond_model
-    )
+    if cond_image is not None:
+        cond = process_cond_module(
+            global_opt,
+            cond_image=cond_image,
+            cond_inp_type = in_type,
+            cond_model = cond_model
+        )
+    else:
+        cond = process_cond_module(
+            global_opt,
+            cond_image=input_image,
+            cond_inp_type=in_type,
+            cond_model=cond_model
+        )
     with torch.no_grad():
         adapter_features = adapter(cond)
 
@@ -81,4 +89,4 @@ with gr.Blocks(css='style.css') as demo:
             create_demo_animalpose(run)
 
 demo.queue(concurrency_count=3, max_size=20)
-demo.launch(server_name="0.0.0.0", share=True)
+demo.launch(server_name="0.0.0.0", server_port="8080")

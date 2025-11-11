@@ -181,7 +181,9 @@ def create_demo_animalpose(run):
         with gr.Row():
             with gr.Column():
                 input_image = gr.Image(source='upload', type='numpy')
-                gr.Markdown('Upload your animal pose map here.')  # <-- 添加提示
+                gr.Markdown('Upload your animal origin image here.')  # <-- 添加提示
+                cond_image = gr.Image(source='upload', type='numpy')
+                gr.Markdown('Upload your animal pose image here.')  # <-- 添加提示
                 prompt = gr.Textbox(label='Prompt')
                 run_button = gr.Button(label='Run')
                 with gr.Accordion('Advanced options', open=False):
@@ -219,7 +221,7 @@ def create_demo_animalpose(run):
                     grid=2, height='auto')
         ips = [
             input_image, in_type, prompt, a_prompt, n_prompt,
-            ddim_steps, scale, seed, cond_name, con_strength
+            ddim_steps, scale, seed, cond_name, con_strength, cond_image
         ]
         run_button.click(fn=run,
                          inputs=ips,

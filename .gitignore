@@ -3,3 +3,4 @@ checkpoints
 experiments
 .ipynb_checkpoints
 *__pycache__*
+hf_home
