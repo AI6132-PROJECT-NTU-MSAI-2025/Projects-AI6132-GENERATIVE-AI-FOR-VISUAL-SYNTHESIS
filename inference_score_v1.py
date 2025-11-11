@@ -146,10 +146,10 @@ def generation_phase(sampler, adapter, dataset, TEMP_GEN_DIR, TEMP_REAL_DIR, TEM
         generated_image = generated_image.resize(IMAGE_SIZE)
 
         generated_image_tensor = pil_to_lpips_tensor(generated_image, DEVICE)
-        control_img_tensor = pil_to_lpips_tensor(control_img, DEVICE)
+        real_img_tensor = pil_to_lpips_tensor(real_img, DEVICE)
 
         with torch.no_grad():
-            lpips_score = lpips_model(generated_image_tensor, control_img_tensor).item()
+            lpips_score = lpips_model(generated_image_tensor, real_img_tensor).item()
         
         structural_lpips_scores.append(lpips_score)
 
