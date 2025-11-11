@@ -14,4 +14,5 @@ stabilityai/stable-diffusion-xl-base-1.0 \
 --report_to="tensorboard" \
 --seed=42 \
 --num_train_epochs 100 \
---logging_dir "/hy-tmp/Projects-AI6132-GENERATIVE-AI-FOR-VISUAL-SYNTHESIS/logs"
+--logging_dir "/hy-tmp/Projects-AI6132-GENERATIVE-AI-FOR-VISUAL-SYNTHESIS/logs" \
+--resume_from_checkpoint "experiments/adapter_sketch_xl/checkpoint-3000"

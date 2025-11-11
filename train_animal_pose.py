@@ -314,6 +314,12 @@ def parse_args(input_args=None):
             " more information see https://huggingface.co/docs/accelerate/v0.17.0/en/package_reference/accelerator#accelerate.Accelerator"
         ),
     )
+    parser.add_argument(
+        "--resume_from_checkpoint",
+        type=str,
+        default=None,
+        help="If provided, resume training from this checkpoint directory.",
+    )
 
     if input_args is not None:
         args = parser.parse_args(input_args)
@@ -623,18 +629,45 @@ def main(args):
     logger.info(f"  Total train batch size (w. parallel, distributed & accumulation) = {total_batch_size}")
     logger.info(f"  Gradient Accumulation steps = {args.gradient_accumulation_steps}")
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
-    global_step = 0
-    first_epoch = 0
 
-    initial_global_step = 0
+    # resume_from_checkpoint 逻辑
+    if args.resume_from_checkpoint:
+        logger.info(f"Resuming from checkpoint {args.resume_from_checkpoint}")
+        accelerator.load_state(args.resume_from_checkpoint)
+
+        # 尝试从 checkpoint 文件夹名称中解析 global_step
+        try:
+            path = os.path.basename(args.resume_from_checkpoint)
+            global_step = int(path.split("-")[-1])
+        except ValueError:
+            global_step = 0
+            logger.warning(
+                "Could not parse global_step from checkpoint name. "
+                "Progress bar may be inaccurate until first step."
+            )
+
+        # 计算起始 epoch
+        # 注意: num_update_steps_per_epoch 是在脚本前面定义的
+        first_epoch = global_step // num_update_steps_per_epoch
+
+        logger.info(f"Resumed from global_step: {global_step}")
+        logger.info(f"Resumed from epoch: {first_epoch}")
+
+    else:
+        global_step = 0
+        first_epoch = 0
+        logger.info("training task starts from the begining")
+
+
 
     progress_bar = tqdm(
         range(0, args.max_train_steps),
-        initial=initial_global_step,
+        initial=global_step,
         desc="Steps",
         # Only show the progress bar once on each machine.
         disable=not accelerator.is_local_main_process,
     )
+
 
     image_logs = None
     for epoch in range(first_epoch, args.num_train_epochs):
