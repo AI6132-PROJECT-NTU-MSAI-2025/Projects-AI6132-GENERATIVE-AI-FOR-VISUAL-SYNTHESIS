@@ -9,7 +9,7 @@ import shlex
 import cv2
 from omegaconf import OmegaConf
 
-from demo import create_demo_sketch, create_demo_canny, create_demo_pose
+from demo import create_demo_sketch, create_demo_canny, create_demo_pose, create_demo_animalpose
 from Adapter.Sampling import diffusion_inference
 from configs.utils import instantiate_from_config
 from Adapter.extra_condition.api import get_cond_model, ExtraCondition
@@ -96,6 +96,8 @@ with gr.Blocks(css='style.css') as demo:
             create_demo_canny(run)
         with gr.TabItem('Keypoint guided'):
             create_demo_pose(run)
+        with gr.TabItem('Animal Pose guided'):
+            create_demo_animalpose(run)
 
 demo.queue(concurrency_count=3, max_size=20)
-demo.launch(server_name="0.0.0.0")
+demo.launch(server_name="0.0.0.0", share=True)

@@ -19,6 +19,7 @@ class ExtraCondition(Enum):
     openpose = 7
     edge = 8
     zoedepth = 9
+    animalpose = 10
 
 
 def get_cond_model(opt, cond_type: ExtraCondition):
@@ -67,6 +68,8 @@ def get_cond_model(opt, cond_type: ExtraCondition):
         model = OpenposeInference().to(opt.device)
         return model
     elif cond_type == ExtraCondition.edge:
+        return None
+    elif cond_type == ExtraCondition.animalpose:
         return None
     else:
         raise NotImplementedError
@@ -299,6 +302,31 @@ def get_cond_edge(opt, cond_image, cond_inp_type='image', cond_model=None):
 
     return edge
 
+
+def get_cond_animalpose(opt, cond_image, cond_inp_type='image', cond_model=None):
+    """
+    处理直接上传的动物姿态图。
+    'cond_inp_type' 在这里被忽略, 因为我们总是假定输入就是姿态图。
+    'cond_model' 也是 None 并且不会被使用。
+    """
+    if isinstance(cond_image, str):
+        pose_image = cv2.imread(cond_image)
+    else:
+        # gradio 输入是 RGB numpy 数组
+        pose_image = cv2.cvtColor(cond_image, cv2.COLOR_RGB2BGR)
+
+    pose_image = resize_numpy_image(
+        pose_image,
+        max_resolution=opt.max_resolution,
+        resize_short_edge=opt.resize_short_edge
+    )
+    opt.H, opt.W = pose_image.shape[:2]
+
+    # 将图像转换为 tensor
+    pose_image = img2tensor(pose_image).unsqueeze(0) / 255.
+    pose_image = pose_image.to(opt.device)
+
+    return pose_image
 
 def get_adapter_feature(inputs, adapters):
     ret_feat_map = None

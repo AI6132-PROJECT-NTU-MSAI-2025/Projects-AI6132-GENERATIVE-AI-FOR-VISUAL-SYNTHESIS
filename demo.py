@@ -171,3 +171,58 @@ def create_demo_pose(run):
                          outputs=[result_gallery],
                          api_name='openpose')
     return demo
+
+def create_demo_animalpose(run):
+    cond_name = gr.State(value='animalpose')  # <-- 修改: 使用 "animalpose"
+    in_type = gr.State(value='image')  # <-- 修改: 使用 "image"，因为 get_cond_animalpose 会处理
+    with gr.Blocks() as demo:
+        with gr.Row():
+            gr.Markdown('## Control Stable Diffusion-XL with Animal Pose Maps')  # <-- 修改: 更改标题
+        with gr.Row():
+            with gr.Column():
+                input_image = gr.Image(source='upload', type='numpy')
+                gr.Markdown('Upload your animal pose map here.')  # <-- 添加提示
+                prompt = gr.Textbox(label='Prompt')
+                run_button = gr.Button(label='Run')
+                with gr.Accordion('Advanced options', open=False):
+                    con_strength = gr.Slider(label='Control Strength',
+                                             minimum=0.0,
+                                             maximum=1.0,
+                                             value=1.0,
+                                             step=0.1)
+                    ddim_steps = gr.Slider(label='Steps',
+                                           minimum=1,
+                                           maximum=100,
+                                           value=20,
+                                           step=1)
+                    scale = gr.Slider(label='Guidance Scale',
+                                      minimum=0.1,
+                                      maximum=30.0,
+                                      value=7.5,
+                                      step=0.1)
+                    seed = gr.Slider(label='Seed',
+                                     minimum=-1,
+                                     maximum=2147483647,
+                                     step=1,
+                                     randomize=True)
+                    a_prompt = gr.Textbox(
+                        label='Added Prompt',
+                        value='in real world, high quality')
+                    n_prompt = gr.Textbox(
+                        label='Negative Prompt',
+                        value='extra digit, fewer digits, cropped, worst quality, low quality'
+                    )
+            with gr.Column():
+                result_gallery = gr.Gallery(label='Output',
+                                            show_label=False,
+                                            elem_id='gallery').style(
+                    grid=2, height='auto')
+        ips = [
+            input_image, in_type, prompt, a_prompt, n_prompt,
+            ddim_steps, scale, seed, cond_name, con_strength
+        ]
+        run_button.click(fn=run,
+                         inputs=ips,
+                         outputs=[result_gallery],
+                         api_name='animal_pose')  # <-- 修改: 更改 API 名称
+    return demo

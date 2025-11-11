@@ -1,0 +1,15 @@
+model:
+  params:
+    adapter_config:
+      # 这个 name 字段现在将用于匹配 app.py 中的 'animalpose'
+      name: animalpose
+      target: Adapter.models.adapters.Adapter_XL
+      params:
+        # 这个 cin: 768 必须与您训练时使用的配置(Adapter-XL-pose.yaml)一致
+        cin: 768
+        channels: [320, 640, 1280, 1280]
+        nums_rb: 2
+        ksize: 1
+        sk: true
+        use_conv: false
+      pretrained: checkpoints/checkpoint-1000/model_00.pth
