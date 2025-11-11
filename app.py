@@ -18,25 +18,6 @@ from Adapter.inference_base import get_base_argument_parser
 
 torch.set_grad_enabled(False)
 
-urls = {
-    'TencentARC/T2I-Adapter':[
-        'models_XL/adapter-xl-canny.pth', 'models_XL/adapter-xl-sketch.pth',
-        'models_XL/adapter-xl-openpose.pth', 'third-party-models/body_pose_model.pth',
-        'third-party-models/table5_pidinet.pth'
-    ]
-}
-
-if os.path.exists('checkpoints') == False:
-    os.mkdir('checkpoints')
-for repo in urls:
-    files = urls[repo]
-    for file in files:
-        url = hf_hub_url(repo, file)
-        name_ckp = url.split('/')[-1]
-        save_path = os.path.join('checkpoints',name_ckp)
-        if os.path.exists(save_path) == False:
-            subprocess.run(shlex.split(f'wget {url} -O {save_path}'))
-
 parser = get_base_argument_parser()
 global_opt = parser.parse_args()
 global_opt.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -90,12 +71,12 @@ def run(input_image, in_type, prompt, a_prompt, n_prompt, ddim_steps, scale, see
 with gr.Blocks(css='style.css') as demo:
     gr.Markdown(DESCRIPTION)
     with gr.Tabs():
-        with gr.TabItem('Sketch guided'):
-            create_demo_sketch(run)
-        with gr.TabItem('Canny guided'):
-            create_demo_canny(run)
-        with gr.TabItem('Keypoint guided'):
-            create_demo_pose(run)
+        # with gr.TabItem('Sketch guided'):
+        #     create_demo_sketch(run)
+        # with gr.TabItem('Canny guided'):
+        #     create_demo_canny(run)
+        # with gr.TabItem('Keypoint guided'):
+        #     create_demo_pose(run)
         with gr.TabItem('Animal Pose guided'):
             create_demo_animalpose(run)
 
