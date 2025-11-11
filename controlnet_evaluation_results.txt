@@ -1,0 +1,11 @@
+--- ControlNet 评估结果 ---
+Timestamp: 2025-11-11 21:48:23
+ControlNet Path: ./check_points/checkpoint-24000
+ControlNet Type: openpose
+Evaluation Samples: 1200
+------------------------------
+CLIP Score (越高越好): 0.2744
+FID Score (越低越好): 79.5472
+KID Score (越低越好): 0.0460
+结构 LPIPS (越低越好): 0.0919
+------------------------------

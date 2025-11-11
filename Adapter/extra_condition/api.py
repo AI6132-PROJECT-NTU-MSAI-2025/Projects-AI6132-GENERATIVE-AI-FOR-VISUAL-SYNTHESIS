@@ -303,7 +303,7 @@ def get_cond_edge(opt, cond_image, cond_inp_type='image', cond_model=None):
     return edge
 
 
-def get_cond_animalpose(opt, cond_image, cond_inp_type='image', cond_model=None):
+def get_cond_animalpose(opt, cond_image):
     """
     处理直接上传的动物姿态图。
     'cond_inp_type' 在这里被忽略, 因为我们总是假定输入就是姿态图。

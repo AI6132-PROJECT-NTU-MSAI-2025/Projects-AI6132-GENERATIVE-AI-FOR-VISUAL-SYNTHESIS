@@ -31,8 +31,7 @@ DESCRIPTION += f'<p>Gradio demo for **T2I-Adapter-XL**: [[GitHub]](https://githu
 # diffusion sampler creation
 sampler = diffusion_inference('stabilityai/stable-diffusion-xl-base-1.0')
 
-def run(input_image, in_type, prompt, a_prompt, n_prompt, ddim_steps, scale, seed, cond_name, con_strength, cond_image=None):
-    in_type = in_type.lower()
+def run(input_image, prompt, a_prompt, n_prompt, ddim_steps, scale, seed, cond_name, con_strength, cond_image=None):
     prompt = prompt+', '+a_prompt
     print(f"loading config file:configs/inference/Adapter-XL-{cond_name}.yaml")
     config = OmegaConf.load(f'configs/inference/Adapter-XL-{cond_name}.yaml')
@@ -41,23 +40,18 @@ def run(input_image, in_type, prompt, a_prompt, n_prompt, ddim_steps, scale, see
     adapter = instantiate_from_config(adapter_config).cuda()
     adapter.load_state_dict(torch.load(config.model.params.adapter_config.pretrained))
     print("adapter is successfully loaded")
-    cond_model = get_cond_model(global_opt, getattr(ExtraCondition, cond_name))
     process_cond_module = getattr(api, f'get_cond_{cond_name}')
 
     # diffusion generation
     if cond_image is not None:
         cond = process_cond_module(
             global_opt,
-            cond_image=cond_image,
-            cond_inp_type = in_type,
-            cond_model = cond_model
+            cond_image=cond_image
         )
     else:
         cond = process_cond_module(
             global_opt,
-            cond_image=input_image,
-            cond_inp_type=in_type,
-            cond_model=cond_model
+            cond_image=input_image
         )
     with torch.no_grad():
         adapter_features = adapter(cond)
@@ -66,12 +60,12 @@ def run(input_image, in_type, prompt, a_prompt, n_prompt, ddim_steps, scale, see
             adapter_features[i] = adapter_features[i]*con_strength
 
         result = sampler.inference(
-            prompt = prompt, 
+            prompt = prompt,
+            size=(cond.shape[-2], cond.shape[-1]),
             prompt_n = n_prompt,
             steps = ddim_steps,
             adapter_features = copy.deepcopy(adapter_features), 
             guidance_scale = scale,
-            size = (cond.shape[-2], cond.shape[-1]),
             seed= seed,
         )
     im_cond = tensor2img(cond)
