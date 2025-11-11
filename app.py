@@ -34,11 +34,13 @@ sampler = diffusion_inference('stabilityai/stable-diffusion-xl-base-1.0')
 def run(input_image, in_type, prompt, a_prompt, n_prompt, ddim_steps, scale, seed, cond_name, con_strength):
     in_type = in_type.lower()
     prompt = prompt+', '+a_prompt
+    print(f"loading config file:configs/inference/Adapter-XL-{cond_name}.yaml")
     config = OmegaConf.load(f'configs/inference/Adapter-XL-{cond_name}.yaml')
     # Adapter creation
     adapter_config = config.model.params.adapter_config
     adapter = instantiate_from_config(adapter_config).cuda()
     adapter.load_state_dict(torch.load(config.model.params.adapter_config.pretrained))
+    print("adapter is successfully loaded")
     cond_model = get_cond_model(global_opt, getattr(ExtraCondition, cond_name))
     process_cond_module = getattr(api, f'get_cond_{cond_name}')
 
@@ -49,6 +51,9 @@ def run(input_image, in_type, prompt, a_prompt, n_prompt, ddim_steps, scale, see
         cond_inp_type = in_type, 
         cond_model = cond_model
     )
+    
+    print("cond image processed successfully")
+    
     with torch.no_grad():
         adapter_features = adapter(cond)
 
@@ -78,7 +83,8 @@ with gr.Blocks(css='style.css') as demo:
         # with gr.TabItem('Keypoint guided'):
         #     create_demo_pose(run)
         with gr.TabItem('Animal Pose guided'):
+            print("start creating animalpose demo")
             create_demo_animalpose(run)
 
 demo.queue(concurrency_count=3, max_size=20)
-demo.launch(server_name="0.0.0.0", share=True)
+demo.launch(server_name="0.0.0.0", share=False, server_port=8080)

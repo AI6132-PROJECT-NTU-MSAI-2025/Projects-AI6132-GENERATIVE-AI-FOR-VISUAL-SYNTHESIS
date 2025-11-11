@@ -15,6 +15,6 @@ datasets==2.13.1
 # 你的其他依赖
 omegaconf
 pytorch_lightning
-gradio
+gradio==3.50.2
 webdataset
 basicsr
