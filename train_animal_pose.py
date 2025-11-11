@@ -59,6 +59,8 @@ from huggingface_hub import hf_hub_url
 import subprocess
 import shlex
 
+import pickle
+
 urls = {
     'TencentARC/T2I-Adapter':[
         # 'third-party-models/body_pose_model.pth'
@@ -670,6 +672,11 @@ def main(args):
 
 
     image_logs = None
+
+    training_history = {
+        'train_losses': []
+    }
+
     for epoch in range(first_epoch, args.num_train_epochs):
         for step, batch in enumerate(train_dataloader):
             with accelerator.accumulate(adapter):
@@ -762,7 +769,18 @@ def main(args):
                         accelerator.save_state(save_path)
                         logger.info(f"Saved state to {save_path}")
 
+                        # 同时保存训练历史
+                        history_save_path = os.path.join(save_path, 'training_history.pkl')
+                        try:
+                            with open(history_save_path, 'wb') as f:
+                                pickle.dump(training_history, f)
+                            logger.info(f"Saved training history to {history_save_path}")
+                        except Exception as e:
+                            logger.warning(f"Failed to save training history: {e}")
+
             logs = {"loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
+            training_history['train_losses'].append(logs["loss"])
+
             progress_bar.set_postfix(**logs)
             accelerator.log(logs, step=global_step)
 
@@ -770,11 +788,29 @@ def main(args):
                 save_path = os.path.join(args.output_dir, f"checkpoint-{global_step}")
                 accelerator.save_state(save_path)
                 logger.info(f"Saved state to {save_path}")
+
+                # 训练结束时保存训练历史
+                history_save_path = os.path.join(save_path, 'training_history.pkl')
+                try:
+                    with open(history_save_path, 'wb') as f:
+                        pickle.dump(training_history, f)
+                    logger.info(f"Saved training history to {history_save_path}")
+                except Exception as e:
+                    logger.warning(f"Failed to save training history: {e}")
+
                 break
 
         save_path = os.path.join(args.output_dir, f"checkpoint-{global_step}")
         accelerator.save_state(save_path)
         logger.info(f"Saved state to {save_path}")
+
+        history_save_path = os.path.join(save_path, 'training_history.pkl')
+        try:
+            with open(history_save_path, 'wb') as f:
+                pickle.dump(training_history, f)
+            logger.info(f"Saved training history to {history_save_path}")
+        except Exception as e:
+            logger.warning(f"Failed to save training history: {e}")
 
 
 if __name__ == "__main__":
