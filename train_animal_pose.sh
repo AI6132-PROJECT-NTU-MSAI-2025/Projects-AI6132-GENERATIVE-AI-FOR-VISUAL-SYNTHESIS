@@ -1,5 +1,7 @@
 #!/bin/bash
-CUDA_LAUNCH_BLOCKING=1 HF_HOME="/hy-tmp/hg_cache" \
+
+HF_HOME="/hy-tmp/hf_home" \
+HF_ENDPOINT="https://hf-mirror.com" \
 accelerate launch train_animal_pose.py \
 --pretrained_model_name_or_path \
 stabilityai/stable-diffusion-xl-base-1.0 \

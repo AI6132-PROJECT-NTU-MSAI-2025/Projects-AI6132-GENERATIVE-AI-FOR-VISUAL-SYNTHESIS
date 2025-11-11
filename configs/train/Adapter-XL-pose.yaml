@@ -10,13 +10,13 @@ model:
         ksize: 1
         sk: true
         use_conv: false
-      pretrained: checkpoints/adapter-xl-sketch.pth
+      pretrained: checkpoints/checkpoint-1000/model_00.pth
 data:
   target: dataset.dataset_dogpose.WebDataModuleFromConfig_DogPose
   params:
     tar_base: "data/Dogpose_wiPose_train"
     batch_size: 2
-    num_workers: 8
+    num_workers: 7
     multinode: True
     train:
       shards: 'dogpose-shard-{000000..000006}.tar'

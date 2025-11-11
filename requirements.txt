@@ -16,3 +16,5 @@ datasets==2.13.1
 omegaconf
 pytorch_lightning
 gradio
+webdataset
+basicsr
