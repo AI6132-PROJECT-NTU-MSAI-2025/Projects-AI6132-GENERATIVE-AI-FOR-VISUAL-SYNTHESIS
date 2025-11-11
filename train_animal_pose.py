@@ -472,7 +472,30 @@ def main(args):
                 torch.save(model.state_dict(), os.path.join(output_dir, 'model_%02d.pth'%i))
                 i -= 1
 
+        def load_model_hook(models, input_dir):
+            i = 0
+            while len(models) > 0:
+                # 按照与保存时相同的顺序 (0, 1, ...) 弹出模型
+                # (models[0] 是 adapter)
+                model = models.pop(0)
+
+                # 构建您自定义的 .pth 文件路径
+                model_file = os.path.join(input_dir, f'model_{i:02d}.pth')
+
+                if not os.path.exists(model_file):
+                    logger.warning(f"Could not find model file {model_file} to load.")
+                    continue
+
+                # 从 .pth 文件加载状态字典
+                state_dict = torch.load(model_file, map_location="cpu")
+
+                # 将状态字典加载到模型中
+                model.load_state_dict(state_dict)
+                logger.info(f"Successfully loaded model weights from {model_file}")
+                i += 1
+
         accelerator.register_save_state_pre_hook(save_model_hook)
+        accelerator.register_load_state_pre_hook(load_model_hook)
 
     vae.requires_grad_(False)
     text_encoder_one.requires_grad_(False)
