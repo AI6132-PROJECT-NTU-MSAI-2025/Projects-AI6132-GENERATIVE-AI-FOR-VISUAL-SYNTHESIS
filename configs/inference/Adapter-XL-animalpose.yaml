@@ -12,4 +12,4 @@ model:
         ksize: 1
         sk: true
         use_conv: false
-      pretrained: checkpoints/checkpoint-1000/model_00.pth
+      pretrained: checkpoints/checkpoint-5000/model_00.pth

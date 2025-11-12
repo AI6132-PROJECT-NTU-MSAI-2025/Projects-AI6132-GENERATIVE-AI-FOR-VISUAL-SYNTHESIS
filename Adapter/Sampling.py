@@ -2,7 +2,6 @@ from transformers import AutoTokenizer
 from diffusers import DDPMScheduler, AutoencoderKL
 import torch
 from pytorch_lightning import seed_everything
-import tqdm
 import copy
 import random
 from basicsr.utils import tensor2img
@@ -70,7 +69,7 @@ class diffusion_inference:
         noisy_latents = torch.randn((1, 4, size[0]//8, size[1]//8)).to("cuda")
 
         with torch.no_grad():
-            for t in tqdm.tqdm(self.scheduler.timesteps):
+            for t in self.scheduler.timesteps:
                 with torch.no_grad():
                     input = torch.cat([noisy_latents]*2)
                     noise_pred = self.model(

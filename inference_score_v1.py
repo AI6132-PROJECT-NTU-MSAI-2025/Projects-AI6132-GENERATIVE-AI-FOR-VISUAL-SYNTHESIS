@@ -22,6 +22,7 @@ import copy
 from torchmetrics.functional.multimodal import clip_score
 import cleanfid.fid as fid 
 import lpips
+from tqdm.auto import tqdm
 
 parser = get_base_argument_parser()
 global_opt = parser.parse_args()
@@ -81,7 +82,7 @@ def generate_image(sampler, adapter, prompt, a_prompt, n_prompt, ddim_steps, con
 
     result_np_bgr = sampler.inference(
         prompt=prompt,
-        size=(cond_image.shape[-2], cond_image.shape[-1]),
+        size=(cond_tensor.shape[-2], cond_tensor.shape[-1]),
         prompt_n=n_prompt,
         steps=ddim_steps,
         adapter_features=copy.deepcopy(adapter_features),
@@ -111,10 +112,11 @@ def generation_phase(sampler, adapter, dataset, TEMP_GEN_DIR, TEMP_REAL_DIR, TEM
     clip_prompts = []
     structural_lpips_scores = [] 
     
-    data_iterator = dataset.take(NUM_SAMPLES_TO_EVALUATE)
+    data_iterator = dataset.select(range(NUM_SAMPLES_TO_EVALUATE))
     print(f"\n--- 阶段一：开始从数据集中生成和收集 {NUM_SAMPLES_TO_EVALUATE} 张图片 ---")
 
-    for i, example in enumerate(data_iterator):
+    pbar = tqdm(enumerate(data_iterator), total=NUM_SAMPLES_TO_EVALUATE, desc="生成图像并计算LPIPS")
+    for i, example in pbar:
         prompt = example[caption_col]
         raw_control_img = extract_and_decode_image(example[conditioning_image_col])
         raw_real_img = extract_and_decode_image(example[real_image_col])
@@ -156,8 +158,9 @@ def generation_phase(sampler, adapter, dataset, TEMP_GEN_DIR, TEMP_REAL_DIR, TEM
         # 4. 收集 prompts
         clip_prompts.append(prompt)
 
-        if (i + 1) % 100 == 0:
-            print(f"已处理 {i + 1} 个样本...")
+        pbar.set_postfix(status=f"已处理{i+1}/{NUM_SAMPLES_TO_EVALUATE}",
+                         avg_LPIPS=f"avg structural_lpips_scores:{sum(structural_lpips_scores)/len(structural_lpips_scores):.4f}"
+                        )
             
     avg_structural_lpips = sum(structural_lpips_scores) / len(structural_lpips_scores) if structural_lpips_scores else 0
     print("--- 图像生成和 LPIPS 结构保真度计算完成 ---")
@@ -278,13 +281,13 @@ def metric_phase(TEMP_GEN_DIR, TEMP_REAL_DIR, TEMP_PROMPTS_FILE, TEMP_LPIPS_FILE
 if __name__ == "__main__":
 
     # 设置为 True 运行生成阶段，False 跳过生成，直接从磁盘加载已经生成完成的图片集
-    RUN_GENERATION_PHASE = False  
+    RUN_GENERATION_PHASE = True  
     
     # 如果此前已完成图像生成步骤，这里设置为None，会直接从lpip记录文件读取数值
     avg_structural_lpips_result = None # 初始设置为 None
 
     # --- 全局配置 ---
-    PARQUET_FILE_PATH = "combined_test_data.parquet"
+    PARQUET_FILE_PATH = "./data/combined_test_data.parquet"
     conditioning_image_col = 'conditioning_image'
     real_image_col = 'original_image'
     caption_col = "caption"
