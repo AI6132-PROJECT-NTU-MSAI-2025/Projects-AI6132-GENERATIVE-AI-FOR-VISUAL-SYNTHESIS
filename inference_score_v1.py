@@ -6,8 +6,11 @@ import numpy as np
 import datetime
 from PIL import Image
 from datasets import load_dataset
-from diffusers import StableDiffusionXLControlNetPipeline, ControlNetModel, UniPCMultistepScheduler
+
+
 from Adapter.Sampling import diffusion_inference
+from Adapter.inference_base import get_base_argument_parser
+from Adapter.extra_condition.api import get_cond_animalpose
 
 from omegaconf import OmegaConf
 import cv2
@@ -19,10 +22,12 @@ import copy
 from torchmetrics.functional.multimodal import clip_score
 import cleanfid.fid as fid 
 import lpips
-from controlnet_aux import OpenposeDetector 
-# ----------------------------------------------------
 
-# --- 辅助函数：图像数据解码 (处理数据集中的字节流) ---
+parser = get_base_argument_parser()
+global_opt = parser.parse_args()
+global_opt.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
+
 def extract_and_decode_image(image_data):
     """尝试从字节流或包含字节流的字典中提取数据，并转换为 PIL.Image 对象。"""
     image_bytes = None
@@ -66,18 +71,9 @@ def initialize_basemodel_and_adapter(base_model_path, adapter_config_name, DEVIC
     return sampler, adapter
 
 
-def generate_image(sampler, adapter, prompt, a_prompt, n_prompt, ddim_steps, con_strength, DEVICE, cond_image=None, seed=-1):
-    image_size = (cond_image.height, cond_image.width)
-
+def generate_image(sampler, adapter, prompt, a_prompt, n_prompt, ddim_steps, con_strength, cond_image=None, seed=-1):
     prompt = prompt + ', ' + a_prompt
-
-    cond_np_rgb = np.array(cond_image.convert("RGB"))
-
-    cond_np_bgr = cv2.cvtColor(cond_np_rgb, cv2.COLOR_RGB2BGR)
-
-    cond_tensor = img2tensor(cond_np_bgr).unsqueeze(0) / 255.
-
-    cond_tensor = cond_tensor.to(DEVICE)
+    cond_tensor = get_cond_animalpose(global_opt, cond_image)
 
     adapter_features = adapter(cond_tensor)
     for i in range(len(adapter_features)):
@@ -85,7 +81,7 @@ def generate_image(sampler, adapter, prompt, a_prompt, n_prompt, ddim_steps, con
 
     result_np_bgr = sampler.inference(
         prompt=prompt,
-        size=image_size,
+        size=(cond_image.shape[-2], cond_image.shape[-1]),
         prompt_n=n_prompt,
         steps=ddim_steps,
         adapter_features=copy.deepcopy(adapter_features),
@@ -126,6 +122,7 @@ def generation_phase(sampler, adapter, dataset, TEMP_GEN_DIR, TEMP_REAL_DIR, TEM
         control_img = raw_control_img.convert("RGB").resize(IMAGE_SIZE)
         real_img = raw_real_img.convert("RGB").resize(IMAGE_SIZE)
 
+        control_img_np = np.array(control_img)
         # 1. ControlNet 图像生成
         with torch.no_grad():
             a_prompt = "in real world, high quality"
@@ -137,9 +134,8 @@ def generation_phase(sampler, adapter, dataset, TEMP_GEN_DIR, TEMP_REAL_DIR, TEM
                                              n_prompt=n_prompt,
                                              ddim_steps=num_inference_steps,
                                              con_strength=control_strength,
-                                             cond_image=control_img,
                                              seed=-1,
-                                             DEVICE=DEVICE
+                                             cond_image=control_img_np
                                              )
 
         # 2. 结构 LPIPS 计算
