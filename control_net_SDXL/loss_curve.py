@@ -3,23 +3,22 @@ from matplotlib import pyplot as plt
 import pickle
 import pandas as pd
 
-loss_file='loss_pkl/training_history.pkl'
+loss_file= 'check_points/24000/training_history.pkl'
 
 with open(loss_file, 'rb') as f:
     # 使用 pickle.load() 读取数据
     history_data = pickle.load(f)
 
-print(history_data)
+#print(history_data)
 
 np.random.seed(42) # 为了结果可复现
 raw_loss_list = history_data['train_losses']
-
+raw_loss_list=raw_loss_list[2:]
 loss_series = pd.Series(raw_loss_list)
-WINDOW_SIZE = 20 # 平滑窗口大小
+WINDOW_SIZE = 100 # 平滑窗口大小
 smoothed_loss = loss_series.rolling(window=WINDOW_SIZE, min_periods=1).mean()
 
-DESIRED_POINTS = 1000 # 例如，希望图上只有 200 个点
-
+DESIRED_POINTS = 500 # 例如，希望图上只有 200 个点
 total_steps = len(raw_loss_list)
 if total_steps > DESIRED_POINTS:
     # 计算需要跳过的步长
@@ -34,6 +33,7 @@ sampled_steps = sample_indices
 sampled_raw_loss = [raw_loss_list[i] for i in sample_indices]
 sampled_smoothed_loss = [smoothed_loss[i] for i in sample_indices]
 plt.figure(figsize=(12, 6))
+
 if total_steps > DESIRED_POINTS: # 只有当采样发生时才绘制采样点
     plt.plot(sampled_steps, sampled_raw_loss,
              label='Raw Loss (Sampled)',

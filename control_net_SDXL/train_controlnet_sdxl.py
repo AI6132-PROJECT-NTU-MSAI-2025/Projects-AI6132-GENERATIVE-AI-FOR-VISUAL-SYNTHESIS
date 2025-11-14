@@ -57,7 +57,7 @@ from diffusers.utils.hub_utils import load_or_create_model_card, populate_model_
 from diffusers.utils.import_utils import is_torch_npu_available, is_xformers_available
 from diffusers.utils.torch_utils import is_compiled_module
 
-# --- [新增] 导入 pickle 库 ---
+# --- [新增] 导入 pickle �?---
 import pickle
 
 # -----------------------------
@@ -810,7 +810,7 @@ def prepare_train_dataset(dataset, accelerator):
         return examples
 
     with accelerator.main_process_first():
-        dataset = dataset.cast_column(args.image_column, daIMG())  # <--- 关键修复‚?
+        dataset = dataset.cast_column(args.image_column, daIMG())  # <--- 关键修复�?
         dataset = dataset.cast_column(args.conditioning_image_column, daIMG())
 
         dataset = dataset.with_transform(preprocess_train)
@@ -839,13 +839,13 @@ def collate_fn(examples):
 
 
 def main(args):
-    # --- [修改 1] 初始化损失和准确率列表 ---
+    # --- [修改 1] 初始化损失和准确率列�?---
     train_losses = []
-    # 验证准确度/损失：由于ControlNet的验证是生成图像，而不是计算数值指标，
-    # 故这里只保留训练损失，或者您可以将 validation_loss 也加入进来如果 log_validation 返回它的话
+    # 验证准确�?损失：由于ControlNet的验证是生成图像，而不是计算数值指标，
+    # 故这里只保留训练损失，或者您可以�?validation_loss 也加入进来如�?log_validation 返回它的�?
     # val_accuracies = []
     # ----------------------------------------
-    # --- [新增] 定义保存训练历史记录的函数 ---
+    # --- [新增] 定义保存训练历史记录的函�?---
     def save_training_history(output_dir, global_step, losses):
         # 为每个检查点创建一个独立的文件夹，以便保存其专属的损失历史
         save_path = os.path.join(output_dir, f"checkpoint-{global_step}")
@@ -919,6 +919,7 @@ def main(args):
             repo_id = create_repo(
                 repo_id=args.hub_model_id or Path(args.output_dir).name, exist_ok=True, token=args.hub_token
             ).repo_id
+
 
     # Load the tokenizers
     tokenizer_one = AutoTokenizer.from_pretrained(
@@ -1016,12 +1017,23 @@ def main(args):
     text_encoder_two.requires_grad_(False)
     controlnet.train()
 
+    #-- 统计有多少待训练参数 #
+    if accelerator.is_main_process:
+        # 统计 ControlNet 模型中可训练参数的总数
+        trainable_params_count = sum(p.numel() for p in controlnet.parameters() if p.requires_grad)
+        # 格式化输出参数数量（例如：转换为百万）
+        trainable_params_million = trainable_params_count / 1_000_000
+        logger.info(f"ControlNet Model: {type(controlnet).__name__}")
+        logger.info(f"Total Trainable Parameters: {trainable_params_count:,} ({trainable_params_million:.2f} Million)")
+    # --- END 新增 ---
+
     if args.enable_npu_flash_attention:
         if is_torch_npu_available():
             logger.info("npu flash attention enabled.")
             unet.enable_npu_flash_attention()
         else:
             raise ValueError("npu flash attention requires torch_npu extensions and is supported only on npu devices.")
+
 
     if args.enable_xformers_memory_efficient_attention:
         if is_xformers_available():
@@ -1212,6 +1224,15 @@ def main(args):
 
         accelerator.init_trackers(args.tracker_project_name, config=tracker_config)
 
+    if accelerator.is_main_process and accelerator.device.type == "cuda":
+        if torch.cuda.is_available():
+            allocated_bytes = torch.cuda.memory_allocated(accelerator.device)
+            allocated_mib = allocated_bytes / (1024 ** 2)  # 转换为 MiB
+
+            logger.info("-" * 50)
+            logger.info(f"Model Static VRAM Usage (MiB): {allocated_mib:.2f} MiB")
+            logger.info("-" * 50)
+
     # Train!
     total_batch_size = args.train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
 
@@ -1259,13 +1280,13 @@ def main(args):
                     try:
                         with open(history_file, 'rb') as f:
                             history_data = pickle.load(f)
-                            # 恢复 train_losses，覆盖 main 函数顶部的空列表
-                            # global train_losses  # 注：如果 train_losses 在 main 顶部声明，它就是局部变量，此处直接赋值即可。
+                            # 恢复 train_losses，覆�?main 函数顶部的空列表
+                            # global train_losses  # 注：如果 train_losses �?main 顶部声明，它就是局部变量，此处直接赋值即可�?
                             train_losses = history_data.get('train_losses', [])
                             logger.info(f"successful resume loss log file from {path} including {len(train_losses)} points")
                     except Exception as e:
                         logger.warning(f"can't load loss log file: {history_file}: {e}")
-                        # 如果加载失败，则保持 train_losses 为空列表，重新开始记录
+                        # 如果加载失败，则保持 train_losses 为空列表，重新开始记�?
                 else:
                     logger.warning(f"can't find log file from {path} ,loss will be recorded from the beginning.")
             # --- END 新增 ---
@@ -1353,7 +1374,7 @@ def main(args):
                 # --- [修改 2] 记录训练损失 ---
                 # 在每个优化步骤（梯度同步）后记录损失，以获得更平滑的曲线
                 if accelerator.sync_gradients:
-                    # 使用 accelerator.gather_for_metrics 确保分布式训练时损失在主进程上收集
+                    # 使用 accelerator.gather_for_metrics 确保分布式训练时损失在主进程上收�?
                     current_loss = accelerator.gather_for_metrics(loss).mean().item()
                     train_losses.append(current_loss)
                 # ------------------------------
@@ -1469,38 +1490,38 @@ def main(args):
 if __name__ == "__main__":
     training_args = [
         # 继续训练
-        # "--resume_from_checkpoint","/check_points/checkpoint-2000",
-        "--max_train_steps", "10",
-        "--checkpointing_steps", "5",
-        "--validation_steps", "20",
+        "--resume_from_checkpoint","/check_points/checkpoint-21000",
+        
+        "--max_train_steps", "30000",
+        "--checkpointing_steps", "3000",
+        "--validation_steps", "30000",
 
         # 调试参数
-        "--max_train_samples","100",
+        #"--max_train_samples","100",
 
         "--cache_dir", "./cache",
         # 必需参数
         "--pretrained_model_name_or_path", "./SDXL_base_fp16",
         "--variant", "fp16",
-        # 数据集路? ’?键€?
+        # 数据集路? �?键€?
         "--train_data_dir", "./DOG6K",
         "--image_column", "original_image",
         "--conditioning_image_column", "conditioning_image",
         "--caption_column", "caption",
         # 训练参数
         "--resolution", "512",
-        "--train_batch_size", "8",
+        "--train_batch_size", "4",
         "--learning_rate", "1e-5",
-        "--proportion_empty_prompts", "0.2",
-        "--gradient_accumulation_steps", "8",
+        "--proportion_empty_prompts", "0.5",
+        #"--gradient_accumulation_steps", "2",
         "--gradient_checkpointing",
-        "--lr_scheduler", "cosine",
-        "--lr_warmup_steps","500",
-        "--use_8bit_adam", False,
-        "--enable_xformers_memory_efficient_attention", True,
+        #"--lr_scheduler", "cosine",
+        "--lr_warmup_steps","1000",
+        "--enable_xformers_memory_efficient_attention",
         "--seed", "45",
         # 其他可选参?
         "--output_dir", "./check_points",
-        "--mixed_precision", "no",  # 传?choices 中的?
+        "--mixed_precision", "no",  # �?choices 中的?
     ]
     args = parse_args(input_args=training_args)
     main(args)
