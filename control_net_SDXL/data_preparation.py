@@ -4,7 +4,7 @@ import glob
 from typing import List
 
 INPUT_DIR = "E:\Python_projects\AI6132-GAI-DATA\huggingface_dog6K"
-OUTPUT_BASE_NAME = "og6k_processed"  # 新增：分片输出文件的基础名称
+OUTPUT_BASE_NAME = "dog6k_processed"  # 新增：分片输出文件的基础名称
 OUTPUT_DIR = "E:\Python_projects\AI6132-GAI-DATA\dog6k_processed"  # 新增：分片输出的文件夹
 NUM_SHARDS = 10
 
@@ -60,7 +60,7 @@ def split_and_tag_parquet(
         final_len = len(train_df) + len(valid_df) + len(test_df)
         assert total_rows == final_len
         print(f"   - 训练/验证/测试行数: {len(train_df)} / {len(valid_df)} / {len(test_df)}")
-        print("   - ✅ 切分检查通过。")
+        print("   - 切分检查通过。")
 
         # --- 4. 合并并返回 ---
         combined_df = pd.concat([train_df, valid_df, test_df], ignore_index=True)
@@ -124,10 +124,10 @@ else:
             # 保存分片
             shard_df.to_parquet(output_filepath, index=False)
 
-            print(f"✅ 分片 {i + 1}/{NUM_SHARDS} ({len(shard_df)} 行) 已保存到: {output_filepath}")
+            print(f"分片 {i + 1}/{NUM_SHARDS} ({len(shard_df)} 行) 已保存到: {output_filepath}")
 
         print("\n===============================")
-        print(f"✨ 所有数据已成功分割成 {NUM_SHARDS} 份并保存到 {OUTPUT_DIR} 文件夹！")
+        print(f"所有数据已成功分割成 {NUM_SHARDS} 份并保存到 {OUTPUT_DIR} 文件夹")
         print(f"切分计数:\n{final_combined_df['split'].value_counts()}")
         print("===============================")
     else:

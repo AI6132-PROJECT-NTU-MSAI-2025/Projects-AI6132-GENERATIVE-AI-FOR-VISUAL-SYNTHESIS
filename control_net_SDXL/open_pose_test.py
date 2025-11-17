@@ -62,7 +62,7 @@ def test_re_extract_openpose(test_image: Image.Image):
 
     # 根据 MockPoseProcessor 的逻辑，返回的应该是纯黑色图像
     assert np.all(np.array(extracted_map) == 0)
-    print("\n✅ Openpose 模式测试通过：成功调用姿态处理器并返回模拟的条件图。")
+    print("\nOpenpose 模式测试通过：成功调用姿态处理器并返回模拟的条件图。")
 
 
 # 测试非 openpose 模式
@@ -88,4 +88,4 @@ def test_re_extract_non_openpose(test_image: Image.Image, controlnet_type: str):
     output_array = np.array(extracted_map)
     # 检查所有像素是否都是红色 (255, 0, 0)
     assert np.all(output_array == input_array)
-    print(f"\n✅ 非 {controlnet_type} 模式测试通过：成功返回了原始图像的 RGB 副本。")
+    print(f"\n非 {controlnet_type} 模式测试通过：成功返回了原始图像的 RGB 副本。")
