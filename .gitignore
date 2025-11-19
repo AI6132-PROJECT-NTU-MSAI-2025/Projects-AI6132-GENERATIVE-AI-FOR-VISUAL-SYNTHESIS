@@ -6,3 +6,4 @@ experiments
 hf_home
 *.parquet
 temp_*
+.DS_Store
