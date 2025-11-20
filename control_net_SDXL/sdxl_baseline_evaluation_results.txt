@@ -1,0 +1,10 @@
+--- 纯 SDXL 基线评估结果 ---
+Timestamp: 2025-11-12 19:29:46
+Base Model Path: ./SDXL_base_fp16
+Evaluation Samples: 1200
+------------------------------
+CLIP Score (越高越好): 0.2877
+FID Score (越低越好): 99.0817
+KID Score (越低越好): 0.0580
+LPIPS : 0.7509
+------------------------------

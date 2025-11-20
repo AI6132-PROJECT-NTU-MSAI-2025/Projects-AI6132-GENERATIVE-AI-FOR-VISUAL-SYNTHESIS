@@ -1490,8 +1490,8 @@ def main(args):
 if __name__ == "__main__":
     training_args = [
         # 继续训练
-        "--resume_from_checkpoint","/check_points/checkpoint-21000",
-        
+        #"--resume_from_checkpoint","/check_points/checkpoint-21000",
+
         "--max_train_steps", "30000",
         "--checkpointing_steps", "3000",
         "--validation_steps", "30000",
@@ -1503,7 +1503,7 @@ if __name__ == "__main__":
         # 必需参数
         "--pretrained_model_name_or_path", "./SDXL_base_fp16",
         "--variant", "fp16",
-        # 数据集路? �?键€?
+        # 数据集
         "--train_data_dir", "./DOG6K",
         "--image_column", "original_image",
         "--conditioning_image_column", "conditioning_image",
@@ -1513,15 +1513,15 @@ if __name__ == "__main__":
         "--train_batch_size", "4",
         "--learning_rate", "1e-5",
         "--proportion_empty_prompts", "0.5",
-        #"--gradient_accumulation_steps", "2",
+        "--gradient_accumulation_steps", "2",
         "--gradient_checkpointing",
-        #"--lr_scheduler", "cosine",
+        "--lr_scheduler", "cosine",
         "--lr_warmup_steps","1000",
         "--enable_xformers_memory_efficient_attention",
         "--seed", "45",
-        # 其他可选参?
+        # 其他可选参
         "--output_dir", "./check_points",
-        "--mixed_precision", "no",  # �?choices 中的?
+        "--mixed_precision", "no",
     ]
     args = parse_args(input_args=training_args)
     main(args)
