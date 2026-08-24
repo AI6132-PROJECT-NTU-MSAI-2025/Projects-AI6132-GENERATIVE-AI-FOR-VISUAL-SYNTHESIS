@@ -1,10 +1,8 @@
 # PROJECT: AI6132 GENERATIVE AI FOR VISUAL SYNTHESIS
 
-## Project Topic:
-<font color=gray>pending...</font>
+## The main branch is for basic information only. Please perform all actual development on your respective dev branches.
 
 ## Basic INFO about the project:
-
 ### 1. Scoring Criteria  
 Project weighting: **40%** 
 
